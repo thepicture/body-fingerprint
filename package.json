@@ -1,0 +1,17 @@
+{
+  "name": "body-fingerprint",
+  "version": "0.0.0",
+  "description": "Tracks consumers by POST body",
+  "main": "index.js",
+  "keywords": [
+    "body",
+    "post",
+    "json",
+    "multipart",
+    "fingerprint",
+    "bot",
+    "scraper"
+  ],
+  "author": "thepicture",
+  "license": "ISC"
+}
