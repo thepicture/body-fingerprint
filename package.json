@@ -1,8 +1,11 @@
 {
   "name": "body-fingerprint",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Tracks consumers by POST body",
   "main": "index.js",
+  "scripts": {
+    "test": "node test"
+  },
   "keywords": [
     "body",
     "post",
