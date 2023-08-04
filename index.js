@@ -10,13 +10,13 @@ const multipartFingerprint = (req, _, next) => {
     return next();
   }
 
-  [, req.multipart.identifier] = req.headers["content-type"].split("=");
+  [, req.multipart.boundary] = req.headers["content-type"].split("=");
 
   req.on("data", (chunk) => (req.multipart.raw.body += chunk));
 
   req.on("end", () => {
     const [, ...headers] = req.multipart.raw.body
-      .split(`${req.multipart.identifier}\r\n`)
+      .split(`${req.multipart.boundary}\r\n`)
       .map((part) => part.split(/(\r\n){2}/));
 
     headers.forEach(([header]) => {
@@ -54,7 +54,9 @@ const jsonFingerprint = (req, _, next) => {
 
   req.on("end", () => {
     const order = [];
-    JSON.parse(req.json.raw.body, (key) => order.push(key));
+    JSON.parse(req.json.raw.body, (key) => {
+      if (key) order.push(key);
+    });
     req.json.order = order;
     req.json.fingerprint = order.join(",");
 
