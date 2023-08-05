@@ -240,6 +240,63 @@ Content-Type: application/octet-stream
 
     assert.deepStrictEqual(actual, expected);
   });
+
+  it("should parse boundary header order", () => {
+    const expected = [
+      "Content-Disposition",
+      "Content-Disposition",
+      "Content-Disposition",
+      "Content-Type",
+      "Header-One",
+      "Header-Two",
+      "Header-three",
+      "header-four",
+      "HEADER-FIVE",
+    ];
+    const req = new (class extends EventEmitter {
+      get headers() {
+        return {
+          "content-type":
+            "multipart/form-data; boundary=----WebKitFormBoundary1234567890123456",
+        };
+      }
+
+      setEncoding() {}
+    })();
+
+    multipartFingerprint(req, res, next);
+    req.emit(
+      "data",
+      `------WebKitFormBoundary1234567890123456
+Content-Disposition: form-data; name="a"
+
+b
+------WebKitFormBoundary1234567890123456
+Content-Disposition: form-data; name="c"
+
+d
+------WebKitFormBoundary1234567890123456
+Content-Disposition: form-data; name="e"; filename=""
+Content-Type: application/octet-stream
+Header-One: value
+Header-Two: value
+Header-three: value
+header-four: value
+HEADER-FIVE: value
+
+
+------WebKitFormBoundary1234567890123456--
+`.replaceAll("\n", "\r\n")
+    );
+    req.emit("end");
+    const {
+      multipart: {
+        headers: { order: actual },
+      },
+    } = req;
+
+    assert.deepStrictEqual(actual, expected);
+  });
 });
 
 describe("json", () => {

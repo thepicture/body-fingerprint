@@ -4,6 +4,9 @@ const multipartFingerprint = (req, _, next) => {
   req.multipart = {
     raw: { body: "" },
     parts: [],
+    headers: {
+      order: [],
+    },
   };
 
   if (!req.headers["content-type"]?.includes("multipart")) {
@@ -21,6 +24,9 @@ const multipartFingerprint = (req, _, next) => {
 
     headers.forEach(([header]) => {
       const [, ...pairs] = header.split(/; /);
+      req.multipart.headers.order.push(
+        ...header.split("\r\n").map((line) => line.split(/:/)[0])
+      );
 
       const part = [];
       let current = pairs.join("; ");
