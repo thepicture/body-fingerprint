@@ -83,6 +83,46 @@ Content-Type: application/octet-stream
     assert.deepStrictEqual(actual, expected);
   });
 
+  it("should parse unquoted filenames that contain spaces", () => {
+    const expected = [["name"], ["name"], ["name", "filename"]];
+    const req = new (class extends EventEmitter {
+      get headers() {
+        return {
+          "content-type":
+            "multipart/form-data; boundary=----WebKitFormBoundary1234567890123456",
+        };
+      }
+
+      setEncoding() {}
+    })();
+
+    multipartFingerprint(req, res, next);
+    req.emit(
+      "data",
+      `------WebKitFormBoundary1234567890123456
+Content-Disposition: form-data; name="a"
+
+b
+------WebKitFormBoundary1234567890123456
+Content-Disposition: form-data; name="c"
+
+d
+------WebKitFormBoundary1234567890123456
+Content-Disposition: form-data; name="e"; filename= unquoted filename that contain space
+Content-Type: application/octet-stream
+
+
+------WebKitFormBoundary1234567890123456--
+`.replaceAll("\n", "\r\n")
+    );
+    req.emit("end");
+    const {
+      multipart: { parts: actual },
+    } = req;
+
+    assert.deepStrictEqual(actual, expected);
+  });
+
   it("should access fingerprint", () => {
     const expected = "name;name;name,filename";
     const req = new (class extends EventEmitter {
