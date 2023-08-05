@@ -78,7 +78,10 @@ Generated `req.multipart` object:
 ```json
 {
   "parts": [["name"], ["name", "filename"]],
-  "fingerprint": "name;name,filename"
+  "fingerprint": "name;name,filename",
+  "headers": {
+    "order": ["Content-Disposition", "Content-Disposition"]
+  }
 }
 ```
 
