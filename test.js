@@ -9,7 +9,24 @@ const next = () => {};
 
 describe("multipart", () => {
   it("should parse order of simple multipart disposition", () => {
-    const expected = [["name"], ["name"]];
+    const expected = [
+      {
+        attributes: {
+          order: ["name"],
+        },
+        headers: {
+          order: ["Content-Disposition"],
+        },
+      },
+      {
+        attributes: {
+          order: ["name"],
+        },
+        headers: {
+          order: ["Content-Disposition"],
+        },
+      },
+    ];
     const req = new (class extends EventEmitter {
       get headers() {
         return {
@@ -44,7 +61,32 @@ d
   });
 
   it("should parse order of complex multipart disposition", () => {
-    const expected = [["name"], ["name"], ["name", "filename"]];
+    const expected = [
+      {
+        attributes: {
+          order: ["name"],
+        },
+        headers: {
+          order: ["Content-Disposition"],
+        },
+      },
+      {
+        attributes: {
+          order: ["name"],
+        },
+        headers: {
+          order: ["Content-Disposition"],
+        },
+      },
+      {
+        attributes: {
+          order: ["name", "filename"],
+        },
+        headers: {
+          order: ["Content-Disposition", "Content-Type"],
+        },
+      },
+    ];
     const req = new (class extends EventEmitter {
       get headers() {
         return {
@@ -84,7 +126,32 @@ Content-Type: application/octet-stream
   });
 
   it("should parse unquoted filenames that contain spaces", () => {
-    const expected = [["name"], ["name"], ["name", "filename"]];
+    const expected = [
+      {
+        attributes: {
+          order: ["name"],
+        },
+        headers: {
+          order: ["Content-Disposition"],
+        },
+      },
+      {
+        attributes: {
+          order: ["name"],
+        },
+        headers: {
+          order: ["Content-Disposition"],
+        },
+      },
+      {
+        attributes: {
+          order: ["name", "filename"],
+        },
+        headers: {
+          order: ["Content-Disposition", "Content-Type"],
+        },
+      },
+    ];
     const req = new (class extends EventEmitter {
       get headers() {
         return {
