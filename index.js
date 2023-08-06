@@ -23,21 +23,32 @@ const multipartFingerprint = (req, _, next) => {
       .map((part) => part.split(/(\r\n){2}/));
 
     headers.forEach(([header]) => {
-      const [, ...pairs] = header.split(/; /);
-      req.multipart.headers.order.push(
-        ...header.split("\r\n").map((line) => line.split(/:/)[0])
-      );
+      const headerOrder = header
+        .split("\r\n")
+        .map((line) => line.split(/:/)[0]);
 
-      const part = [];
+      const [, ...pairs] = header.split(/; /);
+      req.multipart.headers.order.push(...headerOrder);
+
+      const part = {
+        attributes: {
+          order: [],
+        },
+        headers: {
+          order: headerOrder,
+        },
+      };
       let current = pairs.join("; ");
 
       while (current?.includes("=")) {
-        part.push(current.split("=")[0]);
+        part.attributes.order.push(current.split("=")[0]);
         current = current.split("; ")[1];
       }
 
       req.multipart.parts.push(part);
-      req.multipart.fingerprint = req.multipart.parts.join(";");
+      req.multipart.fingerprint = req.multipart.parts
+        .map(({ attributes: { order } }) => order)
+        .join(";");
     });
 
     next();
