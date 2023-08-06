@@ -66,22 +66,54 @@ Request:
 ```
 POST /multipart HTTP/1.1
 Host: example.com
-Content-Type: multipart/form-data;
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary1234567890123456
 
-boundary=---------------------------1234567890
-Content-Disposition: form-data; name="e"
-Content-Disposition: form-data; name="c"; filename="profile.jpg"
+------WebKitFormBoundary1234567890123456
+Content-Disposition: form-data; name="a"
+
+b
+------WebKitFormBoundary1234567890123456
+Content-Disposition: form-data; name="c"
+
+d
+------WebKitFormBoundary1234567890123456
+Content-Disposition: form-data; name="e"; filename=""
+Content-Type: application/octet-stream
+
+
+------WebKitFormBoundary1234567890123456--
 ```
 
 Generated `req.multipart` object:
 
 ```json
 {
-  "parts": [["name"], ["name", "filename"]],
-  "fingerprint": "name;name,filename",
-  "headers": {
-    "order": ["Content-Disposition", "Content-Disposition"]
-  }
+  "parts": [
+    {
+      "attributes": {
+        "order": ["name"]
+      },
+      "headers": {
+        "order": ["Content-Disposition"]
+      }
+    },
+    {
+      "attributes": {
+        "order": ["name"]
+      },
+      "headers": {
+        "order": ["Content-Disposition"]
+      }
+    },
+    {
+      "attributes": {
+        "order": ["name", "filename"]
+      },
+      "headers": {
+        "order": ["Content-Disposition", "Content-Type"]
+      }
+    }
+  ]
 }
 ```
 
@@ -89,17 +121,16 @@ Generated `req.multipart` object:
 
 Request:
 
-```
+```bash
 POST /json HTTP/1.1
 Host: example.com
 Content-Type: application/json
 
 {
-  "key": "value",
-  "k2": 30,
-  "a": {
-    "b": "e",
-    "c": "f"
+  a: 1,
+  b: {
+    c: 2,
+    d: 3,
   }
 }
 ```
@@ -108,7 +139,7 @@ Generated `req.json` object:
 
 ```json
 {
-  "fingerprint": "key,k2,a,b,c",
-  "order": ["key", "k2", "a", "b", "c"]
+  "fingerprint": "a,c,d,b",
+  "order": ["a", "c", "d", "b"]
 }
 ```
