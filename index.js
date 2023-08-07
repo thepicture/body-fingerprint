@@ -56,11 +56,14 @@ const multipartFingerprint = (req, _, next) => {
 };
 
 const jsonFingerprint = (req, _, next) => {
+  const spaceRegex = /(\s+|\\r\\n|\\r|\\n)/g;
+
   req.setEncoding("utf8");
 
   req.json = {
     raw: { body: "" },
     fingerprint: "",
+    spaces: [],
   };
 
   if (!req.headers["content-type"]?.includes("json")) {
@@ -76,6 +79,10 @@ const jsonFingerprint = (req, _, next) => {
     });
     req.json.order = order;
     req.json.fingerprint = order.join(",");
+
+    req.json.spaces = req.json.raw.body
+      .split(spaceRegex)
+      .filter((match) => match.length && /[\r\n\s]/.test(match));
 
     next();
   });

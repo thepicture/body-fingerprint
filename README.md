@@ -140,6 +140,13 @@ Generated `req.json` object:
 ```json
 {
   "fingerprint": "a,c,d,b",
-  "order": ["a", "c", "d", "b"]
+  "order": ["a", "c", "d", "b"],
+  "spaces": [" ", "\r", " \r", ... "\r"] // spaces fingerprint of json structure
 }
+```
+
+## Test
+
+```js
+npm test
 ```

@@ -480,4 +480,50 @@ describe("json", () => {
 
     assert.deepStrictEqual(actual, expected);
   });
+
+  it("should fingerprint spaces", () => {
+    const exampleJsonString = ' {"a": 5  } ';
+    const expected = [" ", " ", "  ", " "];
+    const req = new (class extends EventEmitter {
+      get headers() {
+        return {
+          "content-type": "application/json",
+        };
+      }
+
+      setEncoding() {}
+    })();
+
+    jsonFingerprint(req, res, next);
+    req.emit("data", exampleJsonString);
+    req.emit("end");
+    const {
+      json: { spaces: actual },
+    } = req;
+
+    assert.deepStrictEqual(actual, expected);
+  });
+
+  it("should fingerprint newline characters", () => {
+    const exampleJsonString = ' {"a": 5  \r\n} \r';
+    const expected = [" ", " ", "  \r\n", " \r"];
+    const req = new (class extends EventEmitter {
+      get headers() {
+        return {
+          "content-type": "application/json",
+        };
+      }
+
+      setEncoding() {}
+    })();
+
+    jsonFingerprint(req, res, next);
+    req.emit("data", exampleJsonString);
+    req.emit("end");
+    const {
+      json: { spaces: actual },
+    } = req;
+
+    assert.deepStrictEqual(actual, expected);
+  });
 });
