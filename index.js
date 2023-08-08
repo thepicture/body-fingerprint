@@ -56,8 +56,6 @@ const multipartFingerprint = (req, _, next) => {
 };
 
 const jsonFingerprint = (req, _, next) => {
-  const spaceRegex = /(\s+|\\r\\n|\\r|\\n)/g;
-
   req.setEncoding("utf8");
 
   req.json = {
@@ -80,9 +78,32 @@ const jsonFingerprint = (req, _, next) => {
     req.json.order = order;
     req.json.fingerprint = order.join(",");
 
-    req.json.spaces = req.json.raw.body
-      .split(spaceRegex)
-      .filter((match) => match.length && /[\r\n\s]/.test(match));
+    const spaces = [];
+    let currentSpace = "";
+
+    let isInsideString = false;
+
+    for (let i = 0; i < req.json.raw.body.length; i++) {
+      const char = req.json.raw.body[i];
+
+      if (char === '"') {
+        isInsideString = !isInsideString;
+      }
+
+      if (!isInsideString && (char === " " || char === "\r" || char === "\n")) {
+        if (currentSpace !== "") {
+          spaces.push(currentSpace);
+          currentSpace = "";
+        }
+        spaces.push(char === " " ? " " : char === "\r" ? "\r" : "\n");
+      } else {
+        currentSpace += char;
+      }
+    }
+
+    req.json.spaces = spaces.filter((entry) =>
+      ["\r", "\n", " "].includes(entry)
+    );
 
     next();
   });
