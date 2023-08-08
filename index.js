@@ -101,8 +101,8 @@ const jsonFingerprint = (req, _, next) => {
       }
     }
 
-    req.json.spaces = spaces.filter(
-      (entry) => !entry.trim() || /[\\r\\n]/.test(entry)
+    req.json.spaces = spaces.filter((entry) =>
+      ["\r", "\n", " "].includes(entry)
     );
 
     next();

@@ -549,4 +549,27 @@ describe("json", () => {
 
     assert.deepStrictEqual(actual, expected);
   });
+
+  it("should not include value caret characters", () => {
+    const exampleJsonString = ' {"a": "who\\r \\n ops"  \r\n} \r';
+    const expected = [" ", " ", " ", " ", "\r", "\n", " ", "\r"];
+    const req = new (class extends EventEmitter {
+      get headers() {
+        return {
+          "content-type": "application/json",
+        };
+      }
+
+      setEncoding() {}
+    })();
+
+    jsonFingerprint(req, res, next);
+    req.emit("data", exampleJsonString);
+    req.emit("end");
+    const {
+      json: { spaces: actual },
+    } = req;
+
+    assert.deepStrictEqual(actual, expected);
+  });
 });
