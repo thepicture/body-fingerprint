@@ -572,4 +572,119 @@ describe("json", () => {
 
     assert.deepStrictEqual(actual, expected);
   });
+
+  it("can parse spaces inner objects", () => {
+    const exampleJsonString = ` {
+      "a": 5,
+      "b": {
+        "c": "a\\n b"
+      }
+    }`;
+    const expected = [
+      " ",
+      "\n",
+      " ",
+      " ",
+      " ",
+      " ",
+      " ",
+      " ",
+      " ",
+      "\n",
+      " ",
+      " ",
+      " ",
+      " ",
+      " ",
+      " ",
+      " ",
+      "\n",
+      " ",
+      " ",
+      " ",
+      " ",
+      " ",
+      " ",
+      " ",
+      " ",
+      " ",
+      "\n",
+      " ",
+      " ",
+      " ",
+      " ",
+      " ",
+      " ",
+      "\n",
+      " ",
+      " ",
+      " ",
+      " ",
+    ];
+    const req = new (class extends EventEmitter {
+      get headers() {
+        return {
+          "content-type": "application/json",
+        };
+      }
+
+      setEncoding() {}
+    })();
+
+    jsonFingerprint(req, res, next);
+    req.emit("data", exampleJsonString);
+    req.emit("end");
+    const {
+      json: { spaces: actual },
+    } = req;
+
+    assert.deepStrictEqual(actual, expected);
+  });
+
+  it("should silently fail on bad body", () => {
+    // no double quotes between property key "a"
+    const exampleJsonString = ' {a: "who\\r \\n ops"  \r\n} \r';
+    const expected = [" ", " ", " ", " ", "\r", "\n", " ", "\r"];
+    const req = new (class extends EventEmitter {
+      get headers() {
+        return {
+          "content-type": "application/json",
+        };
+      }
+
+      setEncoding() {}
+    })();
+
+    jsonFingerprint(req, res, next);
+    req.emit("data", exampleJsonString);
+    req.emit("end");
+    const {
+      json: { spaces: actual },
+    } = req;
+
+    assert.deepStrictEqual(actual, expected);
+  });
+
+  it("should have error on fail parse", () => {
+    // no double quotes between property key "a"
+    const exampleJsonString = ' {a: "who\\r \\n ops"  \r\n} \r';
+    const expected = "Unexpected token a in JSON at position 2";
+    const req = new (class extends EventEmitter {
+      get headers() {
+        return {
+          "content-type": "application/json",
+        };
+      }
+
+      setEncoding() {}
+    })();
+
+    jsonFingerprint(req, res, next);
+    req.emit("data", exampleJsonString);
+    req.emit("end");
+
+    const actual = req.json.error.message;
+
+    assert.equal(actual, expected);
+  });
 });

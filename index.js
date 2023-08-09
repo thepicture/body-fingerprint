@@ -72,11 +72,17 @@ const jsonFingerprint = (req, _, next) => {
 
   req.on("end", () => {
     const order = [];
-    JSON.parse(req.json.raw.body, (key) => {
-      if (key) order.push(key);
-    });
+
+    try {
+      JSON.parse(req.json.raw.body, (key) => {
+        if (key) order.push(key);
+      });
+    } catch (error) {
+      req.json.error = error;
+    }
+
     req.json.order = order;
-    req.json.fingerprint = order.join(",");
+    req.json.fingerprint = order.join();
 
     const spaces = [];
     let currentSpace = "";
