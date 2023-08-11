@@ -364,6 +364,99 @@ HEADER-FIVE: value
 
     assert.deepStrictEqual(actual, expected);
   });
+
+  it("should ignore malformed content-type", () => {
+    const expected = {
+      raw: { body: "" },
+      parts: [],
+      headers: {
+        order: [],
+      },
+    };
+    const req = new (class extends EventEmitter {
+      get headers() {
+        return {
+          "content-type": "==multipart/form-data; boundary",
+        };
+      }
+
+      setEncoding() {}
+    })();
+
+    multipartFingerprint(req, res, next);
+    req.emit(
+      "data",
+      `------WebKitFormBoundary1234567890123456
+Content-Disposition: form-data; name="a"
+
+b
+------WebKitFormBoundary1234567890123456
+Content-Disposition: form-data; name="c"
+
+d
+------WebKitFormBoundary1234567890123456
+Content-Disposition: form-data; name="e"; filename=""
+Content-Type: application/octet-stream
+Header-One: value
+Header-Two: value
+Header-three: value
+header-four: value
+HEADER-FIVE: value
+
+
+------WebKitFormBoundary1234567890123456--
+`.replaceAll("\n", "\r\n")
+    );
+    req.emit("end");
+    const { multipart: actual } = req;
+
+    assert.deepStrictEqual(actual, expected);
+  });
+
+  it("should not ignore content-type with spacing", () => {
+    const expected = "name;name;name,filename";
+    const req = new (class extends EventEmitter {
+      get headers() {
+        return {
+          "content-type":
+            "multipart/form-data;   boundary=----WebKitFormBoundary1234567890123456",
+        };
+      }
+
+      setEncoding() {}
+    })();
+
+    multipartFingerprint(req, res, next);
+    req.emit(
+      "data",
+      `------WebKitFormBoundary1234567890123456
+Content-Disposition: form-data; name="a"
+
+b
+------WebKitFormBoundary1234567890123456
+Content-Disposition: form-data; name="c"
+
+d
+------WebKitFormBoundary1234567890123456
+Content-Disposition: form-data; name="e"; filename=""
+Content-Type: application/octet-stream
+Header-One: value
+Header-Two: value
+Header-three: value
+header-four: value
+HEADER-FIVE: value
+
+
+------WebKitFormBoundary1234567890123456--
+`.replaceAll("\n", "\r\n")
+    );
+    req.emit("end");
+    const {
+      multipart: { fingerprint: actual },
+    } = req;
+
+    assert.strictEqual(actual, expected);
+  });
 });
 
 describe("json", () => {
@@ -686,5 +779,57 @@ describe("json", () => {
     const actual = req.json.error.message;
 
     assert.equal(actual, expected);
+  });
+
+  it("should ignore malformed content-type", () => {
+    // no double quotes between property key "a"
+    const exampleJsonString = '{"a": 1}';
+    const expected = {
+      raw: { body: "" },
+      fingerprint: "",
+      spaces: [],
+    };
+    const req = new (class extends EventEmitter {
+      get headers() {
+        return {
+          "content-type": "_app_licati_on/json",
+        };
+      }
+
+      setEncoding() {}
+    })();
+
+    jsonFingerprint(req, res, next);
+    req.emit("data", exampleJsonString);
+    req.emit("end");
+
+    const actual = req.json;
+
+    assert.deepStrictEqual(actual, expected);
+  });
+
+  it("should not ignore encoding-concise content-type", () => {
+    // no double quotes between property key "a"
+    const exampleJsonString = '{"a": 1}';
+    const expected = "a";
+    const req = new (class extends EventEmitter {
+      get headers() {
+        return {
+          "content-type": "application/json;    encoding=UTF-8",
+        };
+      }
+
+      setEncoding() {}
+    })();
+
+    jsonFingerprint(req, res, next);
+    req.emit("data", exampleJsonString);
+    req.emit("end");
+
+    const {
+      json: { fingerprint: actual },
+    } = req;
+
+    assert.deepStrictEqual(actual, expected);
   });
 });
