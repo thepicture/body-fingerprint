@@ -9,7 +9,9 @@ const multipartFingerprint = (req, _, next) => {
     },
   };
 
-  if (!req.headers["content-type"]?.includes("multipart")) {
+  if (
+    !/multipart\/form-data;\s.*boundary\=.+/.test(req.headers["content-type"])
+  ) {
     return next();
   }
 
@@ -64,7 +66,7 @@ const jsonFingerprint = (req, _, next) => {
     spaces: [],
   };
 
-  if (!req.headers["content-type"]?.includes("json")) {
+  if (!/application\/json(.+)?/.test(req.headers["content-type"])) {
     return next();
   }
 

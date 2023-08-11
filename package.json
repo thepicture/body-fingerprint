@@ -1,6 +1,6 @@
 {
   "name": "body-fingerprint",
-  "version": "1.3.3",
+  "version": "1.3.4",
   "description": "Tracks consumers by POST body",
   "main": "index.js",
   "scripts": {
