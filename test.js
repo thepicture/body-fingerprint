@@ -1,7 +1,8 @@
+"use strict";
+
 const assert = require("node:assert");
 const EventEmitter = require("node:events");
 const { describe, it } = require("node:test");
-
 const { multipartFingerprint, jsonFingerprint } = require("./index");
 
 const res = {};
@@ -488,7 +489,7 @@ describe("json", () => {
   });
 
   it("should parse nested json key order", () => {
-    const expected = ["a", "c", "d", "b"];
+    const expected = ["a", "b", "c", "d"];
     const exampleJsonString = JSON.stringify({
       a: 1,
       b: {
@@ -517,7 +518,7 @@ describe("json", () => {
   });
 
   it("should output comma separated keys for fingerprint", () => {
-    const expected = ["a", "c", "d", "b"].join(",");
+    const expected = ["a", "b", "c", "d"].join(",");
     const exampleJsonString = JSON.stringify({
       a: 1,
       b: {
@@ -761,7 +762,8 @@ describe("json", () => {
   it("should have error on fail parse", () => {
     // no double quotes between property key "a"
     const exampleJsonString = ' {a: "who\\r \\n ops"  \r\n} \r';
-    const expected = "Unexpected token a in JSON at position 2";
+    const expected =
+      'Malformed object key should start with "\nLine: 1\nColumn: 4\nChar: 58';
     const req = new (class extends EventEmitter {
       get headers() {
         return {
@@ -831,5 +833,59 @@ describe("json", () => {
     } = req;
 
     assert.deepStrictEqual(actual, expected);
+  });
+
+  it("should print repeating keys in order they were received", () => {
+    const exampleJsonString =
+      '{"a": 1, "a": 1, "a": 2, "b": 3, "a": 2, "b": 3}';
+    const expected = "a,a,a,b,a,b";
+    const req = new (class extends EventEmitter {
+      get headers() {
+        return {
+          "content-type": "application/json",
+        };
+      }
+
+      setEncoding() {}
+    })();
+
+    jsonFingerprint(req, res, next);
+    req.emit("data", exampleJsonString);
+    req.emit("end");
+
+    const {
+      json: { fingerprint: actual },
+    } = req;
+
+    assert.deepStrictEqual(actual, expected);
+  });
+
+  it("should use JSON.parse deep-first legacy mode when depthFirstOrder property is true", () => {
+    const expected = ["a", "c", "d", "b"].join(",");
+    const exampleJsonString = JSON.stringify({
+      a: 1,
+      b: {
+        c: 2,
+        d: 3,
+      },
+    });
+    const req = new (class extends EventEmitter {
+      get headers() {
+        return {
+          "content-type": "application/json",
+        };
+      }
+
+      setEncoding() {}
+    })();
+
+    jsonFingerprint(req, res, next, { depthFirstOrder: true });
+    req.emit("data", exampleJsonString);
+    req.emit("end");
+    const {
+      json: { fingerprint: actual },
+    } = req;
+
+    assert.strictEqual(actual, expected);
   });
 });

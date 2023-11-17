@@ -4,7 +4,8 @@
   "description": "Tracks consumers by POST body",
   "main": "index.js",
   "files": [
-    "index.js"
+    "index.js",
+    "lib"
   ],
   "repository": "thepicture/body-fingerprint",
   "scripts": {

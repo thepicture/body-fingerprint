@@ -121,7 +121,7 @@ Generated `req.multipart` object:
 
 Request:
 
-```bash
+```js
 POST /json HTTP/1.1
 Host: example.com
 Content-Type: application/json
@@ -139,11 +139,27 @@ Generated `req.json` object:
 
 ```json
 {
-  "fingerprint": "a,c,d,b",
-  "order": ["a", "c", "d", "b"],
+  "fingerprint": "a,b,c,d",
+  "order": ["a", "b", "c", "d"],
   "spaces": [" ", "\r", " \r", ... "\r"] // spaces fingerprint of json structure
 }
 ```
+
+## Options
+
+`depthFirstOrder` - traverses keys using depth-first search
+
+```js
+{
+  a: 1,
+  b: {
+    c: 2,
+    d: 3,
+  }
+}
+```
+
+produces `a,c,d,b` if `depthFirstOrder` is `true`. `false` by default
 
 ## Test
 

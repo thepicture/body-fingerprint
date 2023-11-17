@@ -1,3 +1,7 @@
+"use strict";
+
+const clarinet = require("./lib/clarinet");
+
 const multipartFingerprint = (req, _, next) => {
   req.setEncoding("utf8");
 
@@ -57,7 +61,7 @@ const multipartFingerprint = (req, _, next) => {
   });
 };
 
-const jsonFingerprint = (req, _, next) => {
+const jsonFingerprint = (req, _, next, { depthFirstOrder } = {}) => {
   req.setEncoding("utf8");
 
   req.json = {
@@ -75,10 +79,38 @@ const jsonFingerprint = (req, _, next) => {
   req.on("end", () => {
     const order = [];
 
+    const _handle = new Int32Array(new SharedArrayBuffer(4));
+
     try {
-      JSON.parse(req.json.raw.body, (key) => {
-        if (key) order.push(key);
-      });
+      if (depthFirstOrder) {
+        JSON.parse(req.json.raw.body, (key) => {
+          if (key) order.push(key);
+        });
+      } else {
+        let _error;
+
+        new Promise(() => {
+          const parser = clarinet.parser();
+
+          parser.onkey = parser.onopenobject = (key) => {
+            return order.push(key);
+          };
+
+          parser.onerror = parser.onend = (error) => {
+            _error = error;
+
+            Atomics.add(_handle, 0, 1);
+          };
+
+          parser.write(req.json.raw.body).close();
+        });
+
+        Atomics.wait(_handle, 0, 0);
+
+        if (_error) {
+          throw _error;
+        }
+      }
     } catch (error) {
       req.json.error = error;
     }
