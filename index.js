@@ -82,8 +82,6 @@ const jsonFingerprint = (req, _, next, { depthFirstOrder } = {}) => {
   req.on("end", () => {
     const order = [];
 
-    const _handle = new Int32Array(new SharedArrayBuffer(4));
-
     try {
       if (depthFirstOrder) {
         JSON.parse(req.json.raw.body, (key) => {
@@ -91,6 +89,7 @@ const jsonFingerprint = (req, _, next, { depthFirstOrder } = {}) => {
         });
       } else {
         let _error;
+        const _handle = new Int32Array(new SharedArrayBuffer(4));
 
         new Promise(() => {
           const parser = clarinet.parser();
@@ -106,7 +105,7 @@ const jsonFingerprint = (req, _, next, { depthFirstOrder } = {}) => {
           };
 
           parser.write(req.json.raw.body).close();
-        });
+        }).catch(new Function());
 
         Atomics.wait(_handle, 0, 0);
 
