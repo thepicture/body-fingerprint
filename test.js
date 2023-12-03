@@ -370,6 +370,7 @@ HEADER-FIVE: value
     const expected = {
       raw: { body: "" },
       parts: [],
+      entropy: null,
       headers: {
         order: [],
       },
@@ -457,6 +458,84 @@ HEADER-FIVE: value
     } = req;
 
     assert.strictEqual(actual, expected);
+  });
+
+  it("should calculate same entropy when similar multiparts given", () => {
+    const expected = 0.01;
+    const req1 = new (class extends EventEmitter {
+      get headers() {
+        return {
+          "content-type":
+            "multipart/form-data; boundary=----WebKitFormBoundary1234567890123456",
+        };
+      }
+
+      setEncoding() {}
+    })();
+    const req2 = new (class extends EventEmitter {
+      get headers() {
+        return {
+          "content-type":
+            "multipart/form-data; boundary=----WebKitFormBoundary1234567890123456",
+        };
+      }
+
+      setEncoding() {}
+    })();
+
+    multipartFingerprint(req1, res, next);
+    multipartFingerprint(req2, res, next);
+    req1.emit(
+      "data",
+      `------WebKitFormBoundary1234567890123456
+Content-Disposition: form-data; name="a"
+
+b
+------WebKitFormBoundary1234567890123456
+Content-Disposition: form-data; name="c"
+
+d
+------WebKitFormBoundary1234567890123456
+Content-Disposition: form-data; name="e"; filename=""
+Content-Type: application/octet-stream
+Header-One: value
+Header-Two: value
+Header-three: value
+header-four: value
+HEADER-FIVE: value
+
+
+------WebKitFormBoundary1234567890123456--
+`.replaceAll("\n", "\r\n")
+    );
+    req1.emit("end");
+    req2.emit(
+      "data",
+      `------WebKitFormBoundary1234567890123456
+Content-Disposition: form-data; name="a"
+
+bcd
+------WebKitFormBoundary1234567890123456
+Content-Disposition: form-data; name="c"
+
+d
+------WebKitFormBoundary1234567890123456
+Content-Disposition: form-data; name="e"; filename=""
+Content-Type: application/octet-stream
+Header-One: value
+Header-Two: value
+Header-three: value
+header-four: value
+HEADER-FIVE: value
+
+
+------WebKitFormBoundary1234567890123456--
+`.replaceAll("\n", "\r\n")
+    );
+    req2.emit("end");
+    const actual = Math.abs(req1.multipart.entropy - req2.multipart.entropy);
+
+    assert.ok(actual < expected);
   });
 });
 
@@ -789,6 +868,7 @@ describe("json", () => {
     const expected = {
       raw: { body: "" },
       fingerprint: "",
+
       spaces: [],
     };
     const req = new (class extends EventEmitter {
@@ -887,5 +967,40 @@ describe("json", () => {
     } = req;
 
     assert.strictEqual(actual, expected);
+  });
+
+  it("should calculate same entropy for json raw body", () => {
+    const jsonString1 = '{"a": 1, "a": 1, "a": 2, "b": 3, "a": 2, "b": 3}';
+    const jsonString2 = '{"a": 1, "a": 6, "a": 4, "b": 3, "c": 2, "b": 3}';
+    const expected = 0.2;
+    const req1 = new (class extends EventEmitter {
+      get headers() {
+        return {
+          "content-type": "application/json",
+        };
+      }
+
+      setEncoding() {}
+    })();
+    const req2 = new (class extends EventEmitter {
+      get headers() {
+        return {
+          "content-type": "application/json",
+        };
+      }
+
+      setEncoding() {}
+    })();
+
+    jsonFingerprint(req1, res, next);
+    jsonFingerprint(req2, res, next);
+    req1.emit("data", jsonString1);
+    req1.emit("end");
+    req2.emit("data", jsonString2);
+    req2.emit("end");
+
+    const actual = Math.abs(req1.json.entropy - req2.json.entropy);
+
+    assert.ok(actual < expected);
   });
 });

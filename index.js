@@ -1,6 +1,7 @@
 "use strict";
 
 const clarinet = require("./lib/clarinet");
+const { getEntropy } = require("./lib/entropy");
 
 const multipartFingerprint = (req, _, next) => {
   req.setEncoding("utf8");
@@ -11,6 +12,7 @@ const multipartFingerprint = (req, _, next) => {
     headers: {
       order: [],
     },
+    entropy: null,
   };
 
   if (
@@ -55,6 +57,7 @@ const multipartFingerprint = (req, _, next) => {
       req.multipart.fingerprint = req.multipart.parts
         .map(({ attributes: { order } }) => order)
         .join(";");
+      req.multipart.entropy = getEntropy(req.multipart.raw.body);
     });
 
     next();
@@ -79,8 +82,6 @@ const jsonFingerprint = (req, _, next, { depthFirstOrder } = {}) => {
   req.on("end", () => {
     const order = [];
 
-    const _handle = new Int32Array(new SharedArrayBuffer(4));
-
     try {
       if (depthFirstOrder) {
         JSON.parse(req.json.raw.body, (key) => {
@@ -88,6 +89,7 @@ const jsonFingerprint = (req, _, next, { depthFirstOrder } = {}) => {
         });
       } else {
         let _error;
+        const _handle = new Int32Array(new SharedArrayBuffer(4));
 
         new Promise(() => {
           const parser = clarinet.parser();
@@ -103,7 +105,7 @@ const jsonFingerprint = (req, _, next, { depthFirstOrder } = {}) => {
           };
 
           parser.write(req.json.raw.body).close();
-        });
+        }).catch(new Function());
 
         Atomics.wait(_handle, 0, 0);
 
@@ -144,6 +146,7 @@ const jsonFingerprint = (req, _, next, { depthFirstOrder } = {}) => {
     req.json.spaces = spaces.filter((entry) =>
       ["\r", "\n", " "].includes(entry)
     );
+    req.json.entropy = getEntropy(req.json.raw.body);
 
     next();
   });
