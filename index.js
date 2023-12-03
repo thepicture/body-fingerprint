@@ -1,6 +1,7 @@
 "use strict";
 
 const clarinet = require("./lib/clarinet");
+const { getEntropy } = require("./lib/entropy");
 
 const multipartFingerprint = (req, _, next) => {
   req.setEncoding("utf8");
@@ -11,6 +12,7 @@ const multipartFingerprint = (req, _, next) => {
     headers: {
       order: [],
     },
+    entropy: null,
   };
 
   if (
@@ -55,6 +57,7 @@ const multipartFingerprint = (req, _, next) => {
       req.multipart.fingerprint = req.multipart.parts
         .map(({ attributes: { order } }) => order)
         .join(";");
+      req.multipart.entropy = getEntropy(req.multipart.raw.body);
     });
 
     next();
@@ -144,6 +147,7 @@ const jsonFingerprint = (req, _, next, { depthFirstOrder } = {}) => {
     req.json.spaces = spaces.filter((entry) =>
       ["\r", "\n", " "].includes(entry)
     );
+    req.json.entropy = getEntropy(req.json.raw.body);
 
     next();
   });

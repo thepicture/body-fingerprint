@@ -161,6 +161,14 @@ Generated `req.json` object:
 
 produces `a,c,d,b` if `depthFirstOrder` is `true`. `false` by default
 
+## Entropy
+
+A property value representing Shannon entropy. `null` by default
+
+- For multipart access through `req.multipart.entropy`
+
+- For JSON access through `req.json.entropy`
+
 ## Test
 
 ```js
